@@ -1,0 +1,27 @@
+{
+    "name": "mindol",
+    "version": "1.0.0+codex.20260710144759",
+    "description": "Mindol 曼兜 — 三层语义图记忆引擎。零外部模型依赖，n-gram 哈希向量化 + SQLite 持久化。替代 MemPalace，作为迭进（diegin）的长时记忆后端。",
+    "author": {
+        "name": "linsong-dev"
+    },
+    "skills": "./skills/",
+    "interface": {
+        "displayName": "Mindol 曼兜",
+        "shortDescription": "Mindol 曼兜 - 语义记忆引擎",
+        "longDescription": "Mindol 曼兜 是一个轻量级语义记忆引擎，基于 n-gram 哈希向量化和 SQLite 持久化。提供语义检索、多空间记忆管理、语义关系网络、Codex 适配器和迭进引擎桥接。",
+        "developerName": "linsong-dev",
+        "category": "Productivity",
+        "capabilities": [
+            "Read"
+        ],
+        "defaultPrompt": "使用 Mindol 曼兜 语义记忆系统",
+        "brandColor": "#2d3436"
+    },
+    "homepage": "https://github.com/linsong-dev/mindol.git",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/linsong-dev/mindol.git"
+    }
+}
+
