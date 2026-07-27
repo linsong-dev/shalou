@@ -41,7 +41,7 @@ def test_models():
 def test_core():
     clean()
     core = Mindol(storage_path=_DB, persist=False)
-    assert len(core.space_stats()) == 7
+    assert len(core.space_stats()) == 8
     assert "codex" in core.space_stats()
     u1 = core.add_unit(text="test data 123", source="chat", uid="t1", space="codex")
     assert core.get_unit("t1") is not None

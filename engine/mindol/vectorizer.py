@@ -6,6 +6,9 @@ import numpy as np
 class SimpleVectorizer:
     def __init__(self, dim: int = 256):
         self.dim = dim
+
+    def embedding_dim(self) -> int:
+        return self.dim
     def _hash_ngram(self, ngram: str) -> int:
         return int(hashlib.sha256(ngram.encode("utf-8")).hexdigest()[:8], 16)
     def embed(self, text: str) -> np.ndarray:
@@ -65,5 +68,3 @@ class SimpleVectorizer:
 
         # 加权混合
         return char_j * 0.35 + bigram_j * 0.35 + cos * 0.30
-
-        def embedding_dim(self) -> int: return self.dim
