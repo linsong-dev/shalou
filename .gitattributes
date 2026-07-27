@@ -1,0 +1,11 @@
+﻿*.md text working-tree-encoding=UTF-8
+*.py text working-tree-encoding=UTF-8
+*.json text working-tree-encoding=UTF-8
+*.ps1 text working-tree-encoding=UTF-8
+*.toml text working-tree-encoding=UTF-8
+*.txt text working-tree-encoding=UTF-8
+*.yaml text working-tree-encoding=UTF-8
+*.yml text working-tree-encoding=UTF-8
+
+# 声明包含中文字符的仓库
+*.<ANSI> binary
