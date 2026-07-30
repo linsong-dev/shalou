@@ -4,11 +4,13 @@
   "description": "Mindol 曼兜 — 语义记忆引擎。零外部模型依赖，纯本地运行。",
   "author": {
     "name": "linsong-dev",
-    "url": "https://github.com/linsong-dev",
-    "email": "linsong.dev@gmail.com"
+    "email": "linsong.dev@gmail.com",
+    "url": "https://github.com/linsong-dev"
   },
-  "homepage": "https://github.com/linsong-dev",
+  "homepage": "https://github.com/linsong-dev/mindol",
   "repository": "https://github.com/linsong-dev/mindol",
+  "license": "MIT",
+  "keywords": ["mindol", "semantic-memory", "memory-engine", "语义记忆", "曼兜"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Mindol 曼兜",
@@ -17,8 +19,10 @@
     "developerName": "linsong-dev",
     "category": "Productivity",
     "capabilities": ["Interactive", "Read", "Write"],
-    "brandColor": "#2d3436",
-    "websiteURL": "https://github.com/linsong-dev",
-    "defaultPrompt": ["使用 Mindol 进行语义记忆和知识检索"]
+    "websiteURL": "https://github.com/linsong-dev/mindol",
+    "privacyPolicyURL": "https://github.com/linsong-dev/mindol",
+    "termsOfServiceURL": "https://github.com/linsong-dev/mindol",
+    "defaultPrompt": ["使用 Mindol 进行语义记忆和知识检索"],
+    "brandColor": "#2d3436"
   }
 }
