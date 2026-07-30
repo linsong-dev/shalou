@@ -7,7 +7,8 @@
     "url": "https://github.com/linsong-dev",
     "email": "linsong.dev@gmail.com"
   },
-  "homepage":  "https://github.com/linsong-dev/mindol",
+  "homepage": "https://github.com/linsong-dev",
+  "repository": "https://github.com/linsong-dev/mindol",
   "skills": "./skills/",
   "interface": {
     "displayName": "Mindol 曼兜",
@@ -17,7 +18,7 @@
     "category": "Productivity",
     "capabilities": ["Interactive", "Read", "Write"],
     "brandColor": "#2d3436",
-    "websiteURL": "https://github.com/linsong-dev/mindol",
+    "websiteURL": "https://github.com/linsong-dev",
     "defaultPrompt": ["使用 Mindol 进行语义记忆和知识检索"]
   }
 }
