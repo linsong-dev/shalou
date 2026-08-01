@@ -1,6 +1,6 @@
 {
   "name": "mindol",
-  "version": "3.4.0+codex.202607231628",
+  "version": "3.6.6+codex.202608011300",
   "description": "Mindol 曼兜 — 语义记忆引擎。零外部模型依赖，纯本地运行。",
   "author": {
     "name": "linsong-dev",
@@ -9,7 +9,7 @@
   },
   "homepage": "https://github.com/linsong-dev/mindol",
   "repository": "https://github.com/linsong-dev/mindol",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": ["mindol", "semantic-memory", "memory-engine", "语义记忆", "曼兜"],
   "skills": "./skills/",
   "interface": {
