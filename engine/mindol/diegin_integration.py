@@ -32,9 +32,35 @@ def _get_adapter() -> CodexMemoryAdapter:
         _MEMORY_ADAPTER = CodexMemoryAdapter()
     return _MEMORY_ADAPTER
 
+# v3.6: 检索缓存（同进程内同 query 不重复计算）+ 超时熔断
+import threading as _thr
+_SEARCH_CACHE: Dict[str, List[Dict]] = {}
+_SEARCH_TIMEOUT = 2.5
+
+def _search_with_timeout(query: str, max_results: int) -> List[Dict]:
+    """带超时熔断的 Mindol 检索：超时返回空，不阻塞迭进实时链路"""
+    if not query:
+        return []
+    if query in _SEARCH_CACHE:
+        return _SEARCH_CACHE[query]
+    result_box = []
+    def _do():
+        try:
+            result_box.append(_get_adapter().search(query, top_k=max_results))
+        except Exception:
+            result_box.append([])
+    t = _thr.Thread(target=_do, daemon=True)
+    t.start()
+    t.join(_SEARCH_TIMEOUT)
+    if t.is_alive():
+        return []  # 超时熔断：返回空，不阻塞
+    r = result_box[0] if result_box else []
+    _SEARCH_CACHE[query] = r
+    return r
+
 def memory_search(query: str, max_results: int = 5) -> List[Dict]:
     """语义搜索（对外别名: mempalace_search，兼容旧调用方）"""
-    try: return _get_adapter().search(query, top_k=max_results)
+    try: return _search_with_timeout(query, max_results)
     except Exception: return []
 
 def memory_archive(rule_id: str, decision: str, context: Dict = None) -> bool:
@@ -49,7 +75,7 @@ def memory_format_context(query: str = "", top_k: int = 3) -> str:
     """格式化记忆上下文，用于注入到 pre_check() 裁决结果"""
     try:
         a = _get_adapter()
-        r = a.search(query, top_k=top_k) if query else []
+        r = _search_with_timeout(query, top_k) if query else []
         return a.format_context(r)
     except Exception: return ""
 

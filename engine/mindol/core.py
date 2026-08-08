@@ -42,7 +42,7 @@ class Mindol:
     def _init_persistence(self):
         os.makedirs(self._storage_path, exist_ok=True)
         db_path = os.path.join(self._storage_path, "memory.db")
-        self._db = sqlite3.connect(db_path, check_same_thread=False)
+        self._db = sqlite3.connect(db_path, check_same_thread=False, timeout=10.0)
         self._db.execute("CREATE TABLE IF NOT EXISTS memory_units (uid TEXT PRIMARY KEY, space TEXT NOT NULL, text TEXT NOT NULL, source TEXT NOT NULL, path TEXT DEFAULT '', metadata TEXT DEFAULT '{}', timestamp REAL DEFAULT 0, embedding BLOB)")
         self._db.execute("CREATE TABLE IF NOT EXISTS relations (source_uid TEXT NOT NULL, target_uid TEXT NOT NULL, relation_type TEXT NOT NULL, weight REAL DEFAULT 1.0, PRIMARY KEY (source_uid, target_uid, relation_type))")
         self._db.execute("CREATE INDEX IF NOT EXISTS idx_relations_source ON relations(source_uid)")
@@ -79,7 +79,6 @@ class Mindol:
                 _rel_sql = "INSERT OR REPLACE INTO relations VALUES (?,?,?,?)"
                 self._db.execute(_rel_sql,
                                  (source_uid, target_uid, rel_type, weight))
-                self._db.commit()
 
     def _classify_space(self, source: str) -> str:
         return {"rule": self.SPACE_RULE, "pattern": self.SPACE_PATTERN, "trade": self.SPACE_TRADE,
@@ -93,12 +92,12 @@ class Mindol:
         sp.index = np.stack(embs) if embs else None
 
     def _persist_unit(self, unit: MemoryUnit, space: str):
+        # 性能优化 v3.6.6: 去掉逐条 commit（每条 ~30ms），由 save()/close() 统一 commit
         emb = unit.embedding.tobytes() if unit.embedding is not None else b""
         _mem_sql = "INSERT OR REPLACE INTO memory_units VALUES (?,?,?,?,?,?,?,?)"
         self._db.execute(_mem_sql,
                          (unit.uid, space, unit.text, unit.source, unit.path,
                           json.dumps(unit.metadata, ensure_ascii=False), unit.timestamp, emb))
-        self._db.commit()
 
     def retrieve(self, query: str, top_k: int = 10, spaces: List[str] = None) -> List[Tuple[MemoryUnit, float]]:
         qvec = self._vectorizer.embed(query)
@@ -115,10 +114,16 @@ class Mindol:
             if sp is None or sp.index is None or sp.size == 0: continue
             sims = sp.index @ qvec
             w = sw.get(sn, 1.0)
+            # v3.6: 性能修复——calc_similarity 只对 top 候选窗口增强（原来全量逐条计算导致检索 2.5s+）
             if self._vectorizer and hasattr(self._vectorizer, "calc_similarity"):
+                win = min(len(sp.memory_units), max(top_k * 8, 16))
+                if win < len(sp.memory_units):
+                    idx_top = np.argpartition(-sims, win)[:win]
+                else:
+                    idx_top = np.arange(len(sp.memory_units))
                 kb = np.zeros(len(sp.memory_units), dtype=np.float32)
-                for i, u in enumerate(sp.memory_units):
-                    jsim = self._vectorizer.calc_similarity(query, u.text)
+                for i in idx_top:
+                    jsim = self._vectorizer.calc_similarity(query, sp.memory_units[i].text)
                     if jsim > 0.1:
                         kb[i] = 0.3 * jsim
                 sims = sims + kb
@@ -183,12 +188,28 @@ class Mindol:
                     return True
             return False
 
+    
+    def flush(self):
+        """轻量提交：仅 commit 当前未提交事务（权威存储必须即时落盘，防止进程退出丢失）"""
+        if not self._db:
+            return
+        with self._lock:
+            try:
+                self._db.commit()
+            except Exception:
+                pass
+
     def save(self):
+        """提交未提交事务（增量持久化）。
+        所有单元/关系已在 add_unit/add_relation/remove_unit 时即时 INSERT/DELETE，
+        此处仅 commit 落盘——不再全量遍历重写（防每次对话 O(N) 重写 SQLite）。
+        """
         if not self._db: return
         with self._lock:
-            for sn, sp in self._spaces.items():
-                for u in sp.memory_units: self._persist_unit(u, sn)
-            self._db.commit()
+            try:
+                self._db.commit()
+            except Exception:
+                pass
 
     def _load(self):
         if not self._db: return
@@ -208,7 +229,12 @@ class Mindol:
                 self._relation_index.setdefault(r[0], []).append(len(self._relations)-1)
                 self._relation_index.setdefault(r[1], []).append(len(self._relations)-1)
         except Exception as e:
-            print(f"[Mindol] Load warning: {e}")
+            # 静默加载告警：禁止向 stdout/stderr 输出，防止污染钩子 JSON 管道
+            try:
+                with open(os.path.join(self._storage_path, "load_warnings.log"), "a", encoding="utf-8") as _f:
+                    _f.write(f"{time.time()} [Mindol] Load warning: {e}\n")
+            except Exception:
+                pass
 
     def close(self):
         if self._db: self.save(); self._db.close(); self._db = None

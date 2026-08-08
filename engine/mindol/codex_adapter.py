@@ -27,9 +27,25 @@ class CodexMemoryAdapter:
         return self._core
 
     def search(self, query: str, top_k: int = 5, spaces: List[str] = None) -> List[Dict]:
+        """语义检索（[L4-防再生] 过滤 archived 规则/模式单元，消除上下文噪音）"""
         core = self._ensure_core()
-        return [{"text": u.text[:500], "score": round(float(s), 4), "space": u.space, "uid": u.uid, "source": u.source}
-                for u, s in core.retrieve(query, top_k=top_k, spaces=spaces)]
+        # 多取候选以便过滤 archived 后仍有足够结果
+        _cand = core.retrieve(query, top_k=top_k * 4, spaces=spaces) if top_k else []
+        _rule_spaces = (core.SPACE_RULE, core.SPACE_PATTERN)
+        out = []
+        for u, sc in _cand:
+            if u.space in _rule_spaces:
+                try:
+                    _d = json.loads(u.text)
+                    if isinstance(_d, dict) and _d.get("status") == "archived":
+                        continue  # 已归档：保留可追溯但不再注入检索上下文
+                except Exception:
+                    pass  # 非 JSON 文本（聊天等）放行
+            out.append({"text": u.text[:500], "score": round(float(sc), 4),
+                        "space": u.space, "uid": u.uid, "source": u.source})
+            if len(out) >= top_k:
+                break
+        return out
 
     def save_context(self, text: str, source: str = "codex", space: str = "codex", tags: List[str] = None) -> str:
         core = self._ensure_core()
@@ -51,7 +67,7 @@ class CodexMemoryAdapter:
         if not results: return ""
         lines = ["[MEM] Related memories:", ""]
         for r in results:
-            lines.append(f"  [{r['score']:.0%}][{r['space']}] {r['text'][:200]}")
+            lines.append(f"  [{min(r['score'], 1.0):.0%}][{r['space']}] {r['text'][:200]}")
         return "\n".join(lines)
 
     def stats(self) -> Dict[str, int]:

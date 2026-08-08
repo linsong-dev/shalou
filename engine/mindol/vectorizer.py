@@ -6,12 +6,16 @@ import numpy as np
 class SimpleVectorizer:
     def __init__(self, dim: int = 256):
         self.dim = dim
+        # v3.6: embed 结果缓存（检索时对同一文本避免重复哈希计算）
+        self._embed_cache: dict = {}
 
     def embedding_dim(self) -> int:
         return self.dim
     def _hash_ngram(self, ngram: str) -> int:
         return int(hashlib.sha256(ngram.encode("utf-8")).hexdigest()[:8], 16)
     def embed(self, text: str) -> np.ndarray:
+        if text in self._embed_cache:
+            return self._embed_cache[text]
         vec = np.zeros(self.dim, dtype=np.float32)
         if not text.strip(): return vec
         features = {}; text_lower = text.lower()
@@ -33,6 +37,8 @@ class SimpleVectorizer:
         for idx, val in features.items(): vec[idx] = val
         norm = np.linalg.norm(vec)
         if norm > 0: vec = vec / norm
+        if len(self._embed_cache) < 20000:
+            self._embed_cache[text] = vec
         return vec
 
     def calc_similarity(self, text_a: str, text_b: str) -> float:
