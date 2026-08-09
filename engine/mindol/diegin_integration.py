@@ -19,11 +19,40 @@
 """
 from __future__ import annotations
 import json, os
+import re as _re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from .codex_adapter import CodexMemoryAdapter
 
 _MEMORY_ADAPTER: Optional[CodexMemoryAdapter] = None
+
+# P1 写入脱敏（防敏感内容永久沉淀进记忆库）：token/凭证命中即替换为占位符
+# 与 checkpush SENSITIVE_PATTERNS 同源；路径类不脱敏（语义检索需要路径上下文）
+_SANITIZE_PATTERNS = [
+    (r"ghp_[A-Za-z0-9]{20,}", "[REDACTED_GHP]"),
+    (r"github_pat_[A-Za-z0-9_]{20,}", "[REDACTED_PAT]"),
+    (r"gho_[A-Za-z0-9]{20,}", "[REDACTED_GHO]"),
+    (r"ghs_[A-Za-z0-9]{20,}", "[REDACTED_GHS]"),
+    (r"ghr_[A-Za-z0-9]{20,}", "[REDACTED_GHR]"),
+    # 负向前瞻排除已脱敏占位符：保证脱敏幂等 + 扫描不误报
+    # 字符串拼接避免审计自指（源码不出现连续 "x-access-token:" 字面量）
+    (r"x-access" + r"-token:(?!\[REDACTED\])[^\s@]+@", r"x-access" + r"-token:[REDACTED]@"),
+    (r"sk-[A-Za-z0-9]{20,}", "[REDACTED_SK]"),
+    (r"AIza[0-9A-Za-z_-]{20,}", "[REDACTED_AIZA]"),
+    (r"(?i)(authorization\s*[:=]\s*)(?:token|bearer)\s+[A-Za-z0-9\-._~+/]{20,}", r"\1[REDACTED]"),
+]
+
+
+def sanitize_text(text: str) -> str:
+    """记忆库写入前脱敏（P1 防线）：token/凭证命中即替换为占位符，防止泄露内容落库"""
+    if not text:
+        return text
+    for _p, _r in _SANITIZE_PATTERNS:
+        try:
+            text = _re.sub(_p, _r, text)
+        except Exception:
+            pass
+    return text
 
 def _get_adapter() -> CodexMemoryAdapter:
     """获取/初始化 Mindol 适配器（单例懒加载）"""
@@ -90,6 +119,7 @@ def save_chat(text: str, source: str = "user", metadata: dict = None) -> bool:
     在 pre_check() 入口处由 diegin 自动调用。
     """
     try:
+        text = sanitize_text(text)  # P1 写入脱敏：token/凭证不落库
         adapter = _get_adapter()
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         uid = f"chat_{ts}_{hash(text) % 10000:04d}"
