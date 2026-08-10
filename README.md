@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/linsong-dev/mindol/blob/master/LICENSE">
+  [![EN](https://img.shields.io/badge/EN-README-blue)](README.en.md) | [![中文](https://img.shields.io/badge/中文-README-red)](README.md) | <a href="https://github.com/linsong-dev/mindol/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
   </a>
   <img src="https://img.shields.io/badge/python-3.8+-orange" alt="Python">
