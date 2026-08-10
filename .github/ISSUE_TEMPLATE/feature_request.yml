@@ -1,0 +1,16 @@
+name: 功能建议
+description: 建议 Mindol 新空间、检索策略或集成能力
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: 建议方案
+      description: 具体 API / 策略 / 集成设想

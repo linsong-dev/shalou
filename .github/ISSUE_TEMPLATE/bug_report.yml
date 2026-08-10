@@ -1,0 +1,31 @@
+name: Bug 报告
+description: 报告 Mindol 检索/持久化/集成异常
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      description: Python 版本 / 操作系统
+      placeholder: "Python 3.12 · Windows 11"
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 发生了什么？期望是什么？实际是什么？
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: 相关数据（脱敏后）
+      description: 记忆单元文本 / 检索 query / 报错堆栈（请勿贴敏感内容）
+      render: text
