@@ -70,6 +70,19 @@ class CodexMemoryAdapter:
             lines.append(f"  [{min(r['score'], 1.0):.0%}][{r['space']}] {r['text'][:200]}")
         return "\n".join(lines)
 
+    def set_mood(self, val: float, source: str = "") -> float:
+        return self._ensure_core().set_mood(val, source)
+
+    def get_mood(self) -> Dict[str, float]:
+        return self._ensure_core().get_mood()
+
+    def associate(self, query: str, top_k: int = 3) -> List[Dict]:
+        """跨空间联想候选（供预策/恒常门参考）。"""
+        try:
+            return self._ensure_core().associate(query, top_k=top_k)
+        except Exception:
+            return []
+
     def stats(self) -> Dict[str, int]:
         return self._ensure_core().space_stats()
 

@@ -1,6 +1,6 @@
 {
   "name": "mindol",
-  "version": "1.0.0",
+  "version": "3.9.6",
   "description": "Mindol 曼兜 — 语义记忆引擎。零外部模型依赖，纯本地运行。",
   "author": {
     "name": "linsong-dev",

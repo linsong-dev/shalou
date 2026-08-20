@@ -108,37 +108,57 @@ def memory_format_context(query: str = "", top_k: int = 3) -> str:
         return a.format_context(r)
     except Exception: return ""
 
+def memory_decay() -> Dict:
+    """记忆代谢（v3.7.2）：时间衰减 + 自动休眠，供每日维护调用。
+
+    返回统计 {decayed, dormant, skipped}；失败返回空字典（不阻断维护任务）。
+    """
+    try:
+        return _get_adapter()._ensure_core().decay_and_dormancy()
+    except Exception:
+        return {}
+
 def get_memory_stats() -> Dict[str, int]:
     """获取各空间统计"""
     try: return _get_adapter().stats()
     except Exception: return {}
 
+def memory_set_mood(val: float, source: str = "") -> float:
+    """注入情绪标量（自照镜 courage → Mindol mood），驱动检索空间权重调制。
+    失败静默（不阻断主链路）。"""
+    try:
+        return _get_adapter().set_mood(val, source)
+    except Exception:
+        return 0.0
+
+def memory_get_mood() -> Dict[str, float]:
+    try:
+        return _get_adapter().get_mood()
+    except Exception:
+        return {"mood": 0.0, "source": ""}
+
+def memory_associate(query: str, top_k: int = 3) -> List[Dict]:
+    """跨空间联想候选（供预策/恒常门参考；检索失败静默返回空）。"""
+    try:
+        return _get_adapter().associate(query, top_k=top_k)
+    except Exception:
+        return []
+
 def save_chat(text: str, source: str = "user", metadata: dict = None) -> bool:
-    """保存对话内容到 Mindol raw_chat 空间
-    同时同步到 codex 空间保证检索覆盖。
-    在 pre_check() 入口处由 diegin 自动调用。
-    """
+    """保存对话内容到 Mindol raw_chat 空间（单写）。
+    [PERF-C 2026-08-20] 去掉 codex 空间双写——retrieve 默认遍历全空间检索，
+    raw_chat 已被覆盖，双写纯冗余（每工具调用省 1 条写入）。"""
     try:
         text = sanitize_text(text)  # P1 写入脱敏：token/凭证不落库
         adapter = _get_adapter()
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         uid = f"chat_{ts}_{hash(text) % 10000:04d}"
         core = adapter._ensure_core()
-        # 写入 raw_chat 空间
         core.add_unit(
             text=text[:2000],
             source=source,
             uid=uid,
             space=core.SPACE_RAW_CHAT,
-            metadata={"source": source, "saved_at": datetime.now().isoformat(), **(metadata or {})}
-        )
-        # 同步到 codex 空间 (保持向后兼容)
-        codex_uid = f"chat_codex_{ts}_{hash(text) % 10000:04d}"
-        core.add_unit(
-            text=text[:2000],
-            source=f"chat_{source}",
-            uid=codex_uid,
-            space=core.SPACE_CODEX,
             metadata={"source": source, "saved_at": datetime.now().isoformat(), **(metadata or {})}
         )
         core.save()

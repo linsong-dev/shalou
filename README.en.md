@@ -14,7 +14,7 @@
   <a href="https://github.com/linsong-dev/mindol/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
   </a>
-  <img src="https://img.shields.io/badge/version-1.0.0-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.9.6-brightgreen" alt="Version">
   <img src="https://img.shields.io/badge/python-3.8+-orange" alt="Python">
   <img src="https://img.shields.io/badge/dependencies-numpy%20only-brightgreen" alt="Deps">
 </p>
