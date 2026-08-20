@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mindol"
+version = "3.9.7"
+description = "Mindol 曼兜 — 基于内存环境的语义记忆引擎（独立插件底座，供迭进等任意智能体接入）"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "engine"}
+packages = ["mindol", "mindol.tools"]
