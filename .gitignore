@@ -5,3 +5,7 @@ __pycache__/
 .gh_token
 __pycache__/
 *.pyc
+
+# Runtime skill copy (installed layout, not source layout)
+skills/mindol/
+
