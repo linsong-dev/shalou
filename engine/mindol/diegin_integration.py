@@ -54,6 +54,58 @@ def sanitize_text(text: str) -> str:
             pass
     return text
 
+
+# [TOKEN 治理 2026-08-28] 注入噪声过滤：strike 原始 JSON、post_tool 命令转储、含转义路径的 JSON 规则体
+# 每轮重复命中且为机器 JSON（含完整命令/转义路径），对模型无语义价值却持续占 token；仅过滤注入面，不触碰检索裁决。
+_NOISE_MARKERS = (
+    '"count"', 'first_seen', 'last_detail',
+    'exit \u2295',
+    'post_tool: tool=',
+    '\\\\users\\\\',
+)
+
+def _is_noise_unit(text):
+    if not text:
+        return True
+    return any(_m in text for _m in _NOISE_MARKERS)
+
+def _clean_mem_text(text, limit=150):
+    """联想/检索注入文本清洗：去噪声、去 [联想] 前缀、JSON 规则体提取可读 name、折叠空白、限长；垃圾返回空串。"""
+    t = (text or "").strip()
+    if not t or _is_noise_unit(t):
+        return ""
+    parts = [p.strip() for p in t.split(" ⊕ ")]
+    cleaned = []
+    for p in parts:
+        if p.startswith("[联想] "):
+            p = p[len("[联想] "):].strip()
+        if p.startswith("{"):
+            _nm = ""
+            _sc = ""
+            try:
+                _o = json.loads(p)
+                if isinstance(_o, dict):
+                    _nm = str(_o.get("name", "") or "").strip()
+                    _sc = str(_o.get("scene", "") or "").strip()
+            except Exception:
+                # 截断 JSON（core.associate 取 text[:120]）无法整体解析 → 正则提取可读字段
+                _m1 = _re.search(r'"name"\s*:\s*"([^"]*)"', p)
+                _m2 = _re.search(r'"scene"\s*:\s*"([^"]*)"', p)
+                if _m1:
+                    _nm = _m1.group(1).strip()
+                if _m2:
+                    _sc = _m2.group(1).strip()
+            if _nm:
+                p = _nm + ("（" + _sc[:40] + "）" if _sc else "")
+        p = p.replace("\r", " ").replace("\n", " ")
+        p = _re.sub(r"\s+", " ", p).strip()
+        if p:
+            cleaned.append(p)
+    t = " ⊕ ".join(cleaned)
+    if len(t) > limit:
+        t = t[:limit] + "…"
+    return t
+
 def _get_adapter() -> CodexMemoryAdapter:
     """获取/初始化 Mindol 适配器（单例懒加载）"""
     global _MEMORY_ADAPTER
@@ -101,10 +153,12 @@ def memory_archive(rule_id: str, decision: str, context: Dict = None) -> bool:
     except Exception: return False
 
 def memory_format_context(query: str = "", top_k: int = 3) -> str:
-    """格式化记忆上下文，用于注入到 pre_check() 裁决结果"""
+    """格式化记忆上下文，用于注入到 pre_check() 裁决结果
+    [TOKEN 治理 2026-08-28] 注入前过滤噪声单元（strike JSON / post_tool 转储 / 转义路径）。"""
     try:
         a = _get_adapter()
         r = _search_with_timeout(query, top_k) if query else []
+        r = [x for x in r if not _is_noise_unit(str(x.get("text", "")))]
         return a.format_context(r)
     except Exception: return ""
 
@@ -138,9 +192,17 @@ def memory_get_mood() -> Dict[str, float]:
         return {"mood": 0.0, "source": ""}
 
 def memory_associate(query: str, top_k: int = 3) -> List[Dict]:
-    """跨空间联想候选（供预策/恒常门参考；检索失败静默返回空）。"""
+    """跨空间联想候选（供预策/恒常门参考；检索失败静默返回空）。
+    [TOKEN 治理 2026-08-28] 注入前剔除 strike JSON/命令转储噪声、清洗并去重，返回纯文本。"""
     try:
-        return _get_adapter().associate(query, top_k=top_k)
+        out = []
+        for a in _get_adapter().associate(query, top_k=top_k * 4):
+            t = _clean_mem_text(str(a.get("text", "")))
+            if t and t not in out:
+                out.append(t)
+            if len(out) >= top_k:
+                break
+        return [{"text": t, "space": "associate"} for t in out]
     except Exception:
         return []
 
