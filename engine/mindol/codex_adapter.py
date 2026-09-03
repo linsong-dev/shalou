@@ -1,6 +1,7 @@
 """mindol.codex_adapter - Codex integration adapter"""
 from __future__ import annotations
 import json, os
+import re as _re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from .core import Mindol
@@ -14,6 +15,75 @@ def _default_storage_path() -> str:
         _os.environ.get("CODEX_HOME", _os.path.expanduser("~/.codex")),
         "mindol"
     )
+
+
+# [TOKEN 治理 2026-08-28] 记忆条目注入清洗（源头统一出口）
+# 问题：rule/pattern/trade/codex 空间大量 JSON 规则体与命令转储被裸拼进注入（format_context text[:200]），
+#       每轮重复占用 token。此处统一：JSON 规则体→提取可读 name/id/scene；命令转储→取首段语义；路径→<path>。
+_CMD_DUMP_MARKERS = ("post_tool:", " tool=", " cmd=", " command=", " exit=", " exit \u2295", "node E:", ".ps1", ".mjs")
+_JSON_NAME_FIELDS = ("name", "id")
+_JSON_SCENE_FIELDS = ("scene", "summary", "intent_summary")
+
+
+def _clean_mem_entry(text: str, space: str = "", limit: int = 120) -> str:
+    """记忆条目注入清洗：清洗后为空串 = 该条剔除（调用方跳过）。
+    JSON 规则体提取可读字段；命令转储截首段；路径脱敏；折叠空白限长。"""
+    try:
+        t = str(text or "").strip()
+        if not t:
+            return ""
+        # 1) JSON 规则/模式/交易体 → 提取可读字段注入（正文 JSON 不注入）
+        if t.startswith("{"):
+            name = ""
+            scene = ""
+            try:
+                _o = json.loads(t)
+                if isinstance(_o, dict):
+                    for _k in _JSON_NAME_FIELDS:
+                        if _o.get(_k):
+                            name = str(_o[_k]).strip()
+                            break
+                    for _k in _JSON_SCENE_FIELDS:
+                        if _o.get(_k):
+                            scene = str(_o[_k]).strip()
+                            break
+            except Exception:
+                # 截断 JSON（core 取 text[:120]/[:500]）无法整体解析 → 正则提取可读字段
+                for _k in _JSON_NAME_FIELDS + _JSON_SCENE_FIELDS:
+                    _m = _re.search(r'"%s"\s*:\s*"([^"]*)"' % _k, t)
+                    if _m and not name and _k in _JSON_NAME_FIELDS:
+                        name = _m.group(1).strip()
+                    elif _m and not scene and _k in _JSON_SCENE_FIELDS:
+                        scene = _m.group(1).strip()
+            if not name:
+                return ""  # 无可读语义的 JSON → 机器噪声，整条剔除
+            t = name
+            if scene and scene != name:
+                t += "（" + scene[:60] + "）"
+        # 2) 命令转储 → 取首段可读语义（截断 tool=/cmd=/exit= 及之后）
+        elif any(_m in t for _m in _CMD_DUMP_MARKERS):
+            _head = t
+            # post_tool: tool=Bash decision=... → 提取 tool= 名称
+            _mt = _re.search(r"post_tool:\s*tool=([A-Za-z0-9_]+)", _head)
+            if _mt:
+                _head = "post_tool: tool=" + _mt.group(1)
+            else:
+                for _sep in (" | ", " ⊕ ", " tool=", " cmd=", " command=", " exit="):
+                    if _sep in _head:
+                        _head = _head.split(_sep)[0]
+                        break
+            t = _head.strip()
+            if not t:
+                return ""
+        # 3) 绝对路径脱敏
+        t = _re.sub(r"[A-Za-z]:\\[^\s\"']*", "<path>", t)
+        # 4) 折叠空白 + 限长
+        t = _re.sub(r"\s+", " ", t).strip()
+        if len(t) > limit:
+            t = t[:limit] + "…"
+        return t
+    except Exception:
+        return ""
 
 
 class CodexMemoryAdapter:
@@ -67,7 +137,12 @@ class CodexMemoryAdapter:
         if not results: return ""
         lines = ["[MEM] Related memories:", ""]
         for r in results:
-            lines.append(f"  [{min(r['score'], 1.0):.0%}][{r['space']}] {r['text'][:200]}")
+            _clean = _clean_mem_entry(str(r.get("text", "")), space=str(r.get("space", "")))
+            if not _clean:
+                continue  # 噪声条目剔除（JSON 无可读字段 / 纯命令转储）
+            lines.append(f"  [{min(r.get('score', 0.0), 1.0):.0%}][{r.get('space', '')}] {_clean}")
+        if len(lines) <= 2:
+            return ""  # 全部剔除 → 无有效记忆，不注入
         return "\n".join(lines)
 
     def set_mood(self, val: float, source: str = "") -> float:

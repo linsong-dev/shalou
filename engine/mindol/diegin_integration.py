@@ -144,11 +144,56 @@ def memory_search(query: str, max_results: int = 5) -> List[Dict]:
     try: return _search_with_timeout(query, max_results)
     except Exception: return []
 
+# [TOKEN 治理 2026-08-31] 写侧降噪：JSON 全文/长命令转储不落 Mindol（语义检索只需可读摘要）
+_ARCHIVE_DECISION_LIMIT = 240
+_ARCHIVE_CONTEXT_LIMIT = 120
+_ARCHIVE_TOTAL_LIMIT = 420
+
+def _archive_summary(decision: str) -> str:
+    """把归档 decision 压缩为可读摘要：JSON 提取核心字段，命令折叠空白，超限截断。"""
+    d = (decision or "").strip()
+    if not d:
+        return ""
+    if d.startswith("{") or d.startswith("["):
+        try:
+            obj = json.loads(d)
+            if isinstance(obj, dict):
+                picks = []
+                for key in ("action", "status", "summary", "intent_summary", "completion_criteria",
+                            "reason", "result", "report", "decision", "task_id", "task_type"):
+                    v = obj.get(key)
+                    if v is None:
+                        continue
+                    if isinstance(v, (dict, list)):
+                        v = json.dumps(v, ensure_ascii=False)[:60]
+                    picks.append(f"{key}={str(v)[:60]}")
+                if picks:
+                    d = " | ".join(picks)
+            elif isinstance(obj, list):
+                d = f"list({len(obj)} items)"
+        except Exception:
+            pass
+    d = d.replace("\r", " ").replace("\n", " ")
+    d = _re.sub(r"\s+", " ", d).strip()
+    if len(d) > _ARCHIVE_DECISION_LIMIT:
+        d = d[:_ARCHIVE_DECISION_LIMIT - 1] + "…"
+    return d
+
 def memory_archive(rule_id: str, decision: str, context: Dict = None) -> bool:
-    """归档决策记录到 Mindol（对外别名: dgen_archive，兼容旧调用方）"""
+    """归档决策记录到 Mindol（对外别名: dgen_archive，兼容旧调用方）。
+    [TOKEN 治理 2026-08-31] 写侧降噪：不落 JSON 全文/命令转储，只落可读摘要。"""
     try:
-        content = f"[{rule_id}] {decision}"
-        if context: content += f" | ctx: {json.dumps(context, ensure_ascii=False)[:200]}"
+        content = f"[{rule_id}] {_archive_summary(decision)}"
+        if context:
+            try:
+                ctx_str = json.dumps(context, ensure_ascii=False)
+                if len(ctx_str) > _ARCHIVE_CONTEXT_LIMIT:
+                    ctx_str = ctx_str[:_ARCHIVE_CONTEXT_LIMIT] + "…"
+                content += f" | ctx: {ctx_str}"
+            except Exception:
+                pass
+        if len(content) > _ARCHIVE_TOTAL_LIMIT:
+            content = content[:_ARCHIVE_TOTAL_LIMIT] + "…"
         return _get_adapter().archive(rule_id, content)
     except Exception: return False
 
