@@ -1,19 +1,19 @@
-"""mindol.codex_adapter - Codex integration adapter"""
+"""shalou.codex_adapter - Codex integration adapter"""
 from __future__ import annotations
 import json, os
 import re as _re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from .core import Mindol
+from .core import Shalou
 
 
 import os as _os
 
 def _default_storage_path() -> str:
-    """Get the default mindol storage path for Codex."""
+    """Get the default shalou storage path for Codex."""
     return _os.path.join(
         _os.environ.get("CODEX_HOME", _os.path.expanduser("~/.codex")),
-        "mindol"
+        "shalou"
     )
 
 
@@ -89,11 +89,11 @@ def _clean_mem_entry(text: str, space: str = "", limit: int = 120) -> str:
 class CodexMemoryAdapter:
     def __init__(self, storage_path: str = ""):
         self._storage_path = storage_path or _default_storage_path()
-        self._core: Optional[Mindol] = None
+        self._core: Optional[Shalou] = None
 
-    def _ensure_core(self) -> Mindol:
+    def _ensure_core(self) -> Shalou:
         if self._core is None:
-            self._core = Mindol(storage_path=self._storage_path, persist=True)
+            self._core = Shalou(storage_path=self._storage_path, persist=True)
         return self._core
 
     def search(self, query: str, top_k: int = 5, spaces: List[str] = None) -> List[Dict]:

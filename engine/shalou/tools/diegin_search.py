@@ -1,4 +1,4 @@
-"""mindol.tools.diegin_search - Auto search & parameter evolution
+"""shalou.tools.diegin_search - Auto search & parameter evolution
 
 Genetic algorithm based search for optimizing memory system parameters.
 Generates candidates, evaluates, cross-validates, and persists results.
@@ -13,7 +13,7 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..core import Mindol
+from ..core import Shalou
 
 
 SEARCHABLE_PARAMS = {
@@ -138,7 +138,7 @@ def run_search(population_size: int = 5, generations: int = 3) -> List[Dict]:
 
 def write_search_results(results: List[Dict]) -> str:
     """Write search results to memory."""
-    core = Mindol()
+    core = Shalou()
     date = datetime.now().strftime("%Y%m%d")
     text_lines = [
         f"## Diegin Auto Search Results - {datetime.now().strftime('%Y-%m-%d %H:%M')}",

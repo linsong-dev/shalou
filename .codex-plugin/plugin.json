@@ -1,27 +1,27 @@
 {
-  "name": "mindol",
+  "name": "shalou",
   "version": "3.9.11+codex.20260827043233",
-  "description": "Mindol 曼兜 — 语义记忆引擎。零外部模型依赖，纯本地运行。",
+  "description": "Shalou · 流动的记忆 — 语义记忆引擎。零外部模型依赖，纯本地运行。",
   "author": {
     "name": "linsong-dev",
     "email": "linsong.dev@gmail.com",
     "url": "https://github.com/linsong-dev"
   },
-  "homepage": "https://github.com/linsong-dev/mindol",
-  "repository": "https://github.com/linsong-dev/mindol",
+  "homepage": "https://github.com/linsong-dev/shalou",
+  "repository": "https://github.com/linsong-dev/shalou",
   "license": "Apache-2.0",
   "keywords": [
-    "mindol",
+    "shalou",
     "semantic-memory",
     "memory-engine",
     "语义记忆",
-    "曼兜"
+    "Shalou"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Mindol 曼兜",
+    "displayName": "Shalou · 流动的记忆",
     "shortDescription": "语义记忆引擎，零外部依赖",
-    "longDescription": "Mindol（曼兜）是基于内存环境的语义记忆引擎。零外部模型依赖，纯本地运行。n-gram 哈希向量化 + 多空间管理，独立于任何框架。",
+    "longDescription": "Shalou · 流动的记忆是基于内存环境的语义记忆引擎。零外部模型依赖，纯本地运行。n-gram 哈希向量化 + 多空间管理，独立于任何框架。",
     "developerName": "linsong-dev",
     "category": "Productivity",
     "capabilities": [
@@ -29,11 +29,11 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/linsong-dev/mindol",
-    "privacyPolicyURL": "https://github.com/linsong-dev/mindol",
-    "termsOfServiceURL": "https://github.com/linsong-dev/mindol",
+    "websiteURL": "https://github.com/linsong-dev/shalou",
+    "privacyPolicyURL": "https://github.com/linsong-dev/shalou",
+    "termsOfServiceURL": "https://github.com/linsong-dev/shalou",
     "defaultPrompt": [
-      "使用 Mindol 进行语义记忆和知识检索"
+      "使用 Shalou 进行语义记忆和知识检索"
     ],
     "brandColor": "#2d3436"
   }

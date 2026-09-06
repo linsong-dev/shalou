@@ -1,4 +1,4 @@
-"""mindol.tools.track_rule - Rule execution tracker & pattern decay
+"""shalou.tools.track_rule - Rule execution tracker & pattern decay
 
 Records rule/pattern match results into memory spaces.
 Supports pattern confidence decay (7-day rule) and health reporting.
@@ -10,12 +10,12 @@ import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from ..core import Mindol
+from ..core import Shalou
 
 
-def _default_core() -> Mindol:
-    """Get a Mindol instance with default Codex path."""
-    return Mindol()
+def _default_core() -> Shalou:
+    """Get a Shalou instance with default Codex path."""
+    return Shalou()
 
 
 def track_rule_match(rule_id: str, rule_text: str,

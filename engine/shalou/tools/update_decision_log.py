@@ -1,4 +1,4 @@
-"""mindol.tools.update_decision_log - Decision logging
+"""shalou.tools.update_decision_log - Decision logging
 
 Records decision outcomes to memory for later review and pattern analysis.
 """
@@ -9,11 +9,11 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..core import Mindol
+from ..core import Shalou
 
 
-def _default_core() -> Mindol:
-    return Mindol()
+def _default_core() -> Shalou:
+    return Shalou()
 
 
 def write_decision_log(

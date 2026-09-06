@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.svg" width="200" alt="Mindol">
+  <img src="assets/logo.svg" width="200" alt="Shalou">
 </p>
 
-<h1 align="center">Mindol</h1>
+<h1 align="center">Shalou</h1>
 
 <p align="center">
   <b>An in-memory semantic memory engine</b><br>
@@ -11,7 +11,7 @@
 
 <p align="center">
   [![中文](https://img.shields.io/badge/中文-README-red)](README.md) | [![EN](https://img.shields.io/badge/EN-README-blue)](README.en.md) |
-  <a href="https://github.com/linsong-dev/mindol/blob/master/LICENSE">
+  <a href="https://github.com/linsong-dev/shalou/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
   </a>
   <img src="https://img.shields.io/badge/version-3.9.6-brightgreen" alt="Version">
@@ -21,9 +21,9 @@
 
 ---
 
-## What Mindol Is in 30 Seconds
+## What Shalou Is in 30 Seconds
 
-Mindol is a **memory engine built on an in-memory environment**. All data is loaded into memory (numpy arrays) for retrieval; SQLite is only the persistence layer. No API key, GPU, or network required.
+Shalou is a **memory engine built on an in-memory environment**. All data is loaded into memory (numpy arrays) for retrieval; SQLite is only the persistence layer. No API key, GPU, or network required.
 
 ```
 [Memory] numpy arrays ← retrieval happens here (~2ms)
@@ -50,10 +50,10 @@ pip install numpy
 
 ### Usage
 ```python
-from mindol.core import Mindol
+from shalou.core import Shalou
 
 # Pure in-memory mode (no disk writes)
-core = Mindol(persist=False)
+core = Shalou(persist=False)
 
 # Write a memory
 core.add_unit(text="Deep learning training needs a GPU", source="chat", space="codex")
@@ -64,7 +64,7 @@ for unit, score in results:
     print(f"[{score:.2f}] {unit.text[:60]}")
 
 # Persistent mode (auto load/save SQLite)
-core = Mindol(persist=True)
+core = Shalou(persist=True)
 ```
 
 ## Working with Diegin
@@ -72,7 +72,7 @@ core = Mindol(persist=True)
 As the long-term memory backend for [Diegin DGEN](https://github.com/linsong-dev/diegin-skill):
 
 ```python
-from mindol.diegin_integration import memory_archive, memory_search
+from shalou.diegin_integration import memory_archive, memory_search
 memory_archive("rule_001", "Coding rule: always use UTF-8 without BOM")
 results = memory_search("coding rule")
 ```
@@ -80,12 +80,12 @@ results = memory_search("coding rule")
 ## Verify Installation
 
 ```bash
-python tests/mindol/test_core.py
+python tests/shalou/test_core.py
 ```
 
 Expected output:
 ```
-=== Mindol Test Suite ===
+=== Shalou Test Suite ===
   [PASS] vectorizer  [PASS] models
   [PASS] core lifecycle  [PASS] persistence
   [PASS] codex adapter  [PASS] diegin integration
@@ -95,9 +95,9 @@ Expected output:
 ## Project Structure
 
 ```
-mindol/
-├── engine/mindol/       Python core modules
-│   ├── core.py              Mindol engine
+shalou/
+├── engine/shalou/       Python core modules
+│   ├── core.py              Shalou engine
 │   ├── vectorizer.py        n-gram hashed vectorizer
 │   ├── models.py            data models
 │   ├── codex_adapter.py     Codex adapter (optional)
@@ -110,7 +110,7 @@ mindol/
 
 ## Performance
 
-| Item | Mindol | Traditional embedding |
+| Item | Shalou | Traditional embedding |
 |:------|:------|:--------------|
 | Vectorization | ~0.01ms (SHA256) | 50–200ms (API) |
 | Retrieval | ~2ms (numpy dot) | network + API latency |

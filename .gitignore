@@ -7,5 +7,5 @@ __pycache__/
 *.pyc
 
 # Runtime skill copy (installed layout, not source layout)
-skills/mindol/
+skills/shalou/
 

@@ -1,5 +1,5 @@
 name: Bug 报告
-description: 报告 Mindol 检索/持久化/集成异常
+description: 报告 Shalou 检索/持久化/集成异常
 title: "[Bug] "
 labels: ["bug"]
 body:

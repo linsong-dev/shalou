@@ -1,13 +1,14 @@
-"""mindol.core — Mindol 曼兜 语义记忆引擎（替代 MemPalace）"""
+"""shalou.core — Shalou · 流动的记忆 语义记忆引擎（替代 MemPalace）"""
 from __future__ import annotations
 import json, os, re, sqlite3, threading, time, hashlib, math
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
+from . import flip as _flip
 from .vectorizer import SimpleVectorizer
 from .models import MemoryUnit, MemorySpace, SemanticRelation
 
-class Mindol:
-    """Mindol 曼兜 - 三层语义记忆引擎"""
+class Shalou:
+    """Shalou · 流动的记忆 - 三层语义记忆引擎"""
     SPACE_RAW_FILE = "raw_file"
     SPACE_RAW_CHAT = "raw_chat"
     SPACE_RULE = "rule"
@@ -16,6 +17,7 @@ class Mindol:
     SPACE_TRADE = "trade"
     SPACE_CODEX = "codex"
     SPACE_STATE = "state"
+    SPACE_CASE_PROTOTYPE = "case_prototype"
     STRENGTH_MAX = 1.0
     BOOST_REFRESH = 0.05
     # v3.7.2 记忆代谢：仅经验类空间衰减（对话/模式/抽象），权威空间豁免
@@ -26,7 +28,7 @@ class Mindol:
     def __init__(self, storage_path: str = "", vectorizer: Any = None,
                  persist: bool = True, text_clean: bool = True):
         self._storage_path = storage_path or os.path.join(
-            os.environ.get("CODEX_HOME", os.path.expanduser("~/.codex")), "mindol"
+            os.environ.get("CODEX_HOME", os.path.expanduser("~/.codex")), "shalou"
         )
         self._vectorizer = vectorizer or SimpleVectorizer(dim=256)
         self._lock = threading.Lock()
@@ -36,7 +38,8 @@ class Mindol:
         ) if text_clean else None
         self._spaces: Dict[str, MemorySpace] = {}
         for name in [self.SPACE_RAW_FILE, self.SPACE_RAW_CHAT, self.SPACE_RULE,
-                     self.SPACE_PATTERN, self.SPACE_ABSTRACT, self.SPACE_TRADE, self.SPACE_CODEX, self.SPACE_STATE]:
+                     self.SPACE_PATTERN, self.SPACE_ABSTRACT, self.SPACE_TRADE, self.SPACE_CODEX,
+                     self.SPACE_STATE, self.SPACE_CASE_PROTOTYPE]:
             self._spaces[name] = MemorySpace(name=name)
         self._relations: List[SemanticRelation] = []
         self._relation_index: Dict[str, List[int]] = {}
@@ -89,6 +92,11 @@ class Mindol:
                 sp.memory_units.append(unit)
             self._rebuild_index(space)
             if self._db: self._persist_unit(unit, space)
+            # 沙漏读写平衡(L1)：写入在 Shalou 内核瓶颈打点（失败静默，不阻塞主链路）
+            try:
+                _flip.record_io("write", self._storage_path)
+            except Exception:
+                pass
             return unit
 
     def add_relation(self, source_uid: str, target_uid: str, rel_type: str, weight: float = 1.0):
@@ -104,7 +112,9 @@ class Mindol:
 
     def _classify_space(self, source: str) -> str:
         return {"rule": self.SPACE_RULE, "pattern": self.SPACE_PATTERN, "trade": self.SPACE_TRADE,
-                "chat": self.SPACE_RAW_CHAT, "abstract": self.SPACE_ABSTRACT, "codex": self.SPACE_CODEX, "state": self.SPACE_STATE
+                "chat": self.SPACE_RAW_CHAT, "abstract": self.SPACE_ABSTRACT, "codex": self.SPACE_CODEX,
+                "state": self.SPACE_STATE, "case_prototype": self.SPACE_CASE_PROTOTYPE,
+                "shalou_case": self.SPACE_CASE_PROTOTYPE
                 }.get(source, self.SPACE_RAW_FILE)
 
     def _rebuild_index(self, space: str):
@@ -125,6 +135,11 @@ class Mindol:
                           unit.strength, unit.status, unit.last_accessed, unit.access_count))
 
     def retrieve(self, query: str, top_k: int = 10, spaces: List[str] = None) -> List[Tuple[MemoryUnit, float]]:
+        # 沙漏读写平衡(L1)：读取在 Shalou 内核瓶颈打点（失败静默，不阻塞主链路）
+        try:
+            _flip.record_io("read", self._storage_path)
+        except Exception:
+            pass
         qvec = self._vectorizer.embed(query)
         candidates = []
         target_spaces = spaces or list(self._spaces.keys())
@@ -229,6 +244,20 @@ class Mindol:
         self._db.commit()
         return True
 
+    def set_unit_metadata(self, uid, metadata):
+        """安全更新单元 metadata 并持久化（case_prototype 连续成功计数等）；不存在返回 False。"""
+        u = self.get_unit(uid)
+        if u is None:
+            return False
+        u.metadata = dict(metadata or {})
+        with self._lock:
+            if self._db:
+                self._db.execute(
+                    "UPDATE memory_units SET metadata=? WHERE uid=?",
+                    (json.dumps(u.metadata, ensure_ascii=False), uid))
+                self._db.commit()
+        return True
+
     # ── 情绪调制（v3.8 / PERF-D）──────────────────────────────
     def set_mood(self, val: float, source: str = "") -> float:
         """设置全局情绪标量 [-1, +1]（自照镜勇气信号注入）。"""
@@ -255,6 +284,7 @@ class Mindol:
             self.SPACE_CODEX: 1.0,
             self.SPACE_RAW_FILE: 1.0,
             self.SPACE_STATE: 1.0,
+            self.SPACE_CASE_PROTOTYPE: 1.0,
         }
 
     def associate(self, query: str, top_k: int = 3) -> List[Dict]:
@@ -369,7 +399,7 @@ class Mindol:
             # 静默加载告警：禁止向 stdout/stderr 输出，防止污染钩子 JSON 管道
             try:
                 with open(os.path.join(self._storage_path, "load_warnings.log"), "a", encoding="utf-8") as _f:
-                    _f.write(f"{time.time()} [Mindol] Load warning: {e}\n")
+                    _f.write(f"{time.time()} [Shalou] Load warning: {e}\n")
             except Exception:
                 pass
 

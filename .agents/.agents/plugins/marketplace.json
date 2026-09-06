@@ -10,9 +10,9 @@
                                        "authentication":  "ON_INSTALL"
                                    },
                         "category":  "Productivity",
-                        "name":  "mindol",
+                        "name":  "shalou",
                         "source":  {
-                                       "path":  "./plugins/mindol",
+                                       "path":  "./plugins/shalou",
                                        "source":  "local"
                                    }
                     }

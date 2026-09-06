@@ -11,6 +11,6 @@
   </defs>
   <circle cx="200" cy="200" r="195" fill="url(#bg)"/>
   <text x="200" y="185" text-anchor="middle" font-family="Arial" font-size="100" font-weight="bold" fill="url(#m)">M</text>
-  <text x="200" y="260" text-anchor="middle" font-family="Arial" font-size="28" fill="#b2bec3" letter-spacing="8">MINDOL</text>
+  <text x="200" y="260" text-anchor="middle" font-family="Arial" font-size="28" fill="#b2bec3" letter-spacing="8">SHALOU</text>
   <text x="200" y="290" text-anchor="middle" font-family="Arial" font-size="12" fill="#636e72" letter-spacing="2">SEMANTIC MEMORY</text>
 </svg>

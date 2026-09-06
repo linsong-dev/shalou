@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""迁移 MemPalace + TdxClaw 数据到 Mindol 曼兜
+"""迁移 MemPalace + TdxClaw 数据到 Shalou · 流动的记忆
 
 迁移源:
   1. palace_data/convos/ — 旧 MemPalace 对话记忆 (35 个 .md 文件)
@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "engine")))
-from mindol.codex_adapter import CodexMemoryAdapter
+from shalou.codex_adapter import CodexMemoryAdapter
 
 
 DATA_SOURCES = [
@@ -104,7 +104,7 @@ def scan_source(source: dict) -> list:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="迁移旧数据到 Mindol 曼兜")
+    parser = argparse.ArgumentParser(description="迁移旧数据到 Shalou · 流动的记忆")
     parser.add_argument("--dry-run", action="store_true", help="仅预览不写入")
     args = parser.parse_args()
 
@@ -134,12 +134,12 @@ def main():
             else:
                 print(f"  [WARN] 迁移失败: {rec['key'][:40]}")
     
-    print(f"\n[DONE] 迁移完成！已写入 {count}/{total} 条记录到 Mindol")
-    print(f"[INFO] 存储路径: ~/.codex/mindol/memory.db")
+    print(f"\n[DONE] 迁移完成！已写入 {count}/{total} 条记录到 Shalou")
+    print(f"[INFO] 存储路径: ~/.codex/shalou/memory.db")
 
     # Show stats
     stats = CodexMemoryAdapter().stats()
-    print(f"[INFO] Mindol 当前状态: {stats}")
+    print(f"[INFO] Shalou 当前状态: {stats}")
 
 
 if __name__ == "__main__":

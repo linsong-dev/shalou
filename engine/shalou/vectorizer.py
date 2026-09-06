@@ -1,4 +1,4 @@
-"""mindol.vectorizer - n-gram hash vectorizer"""
+"""shalou.vectorizer - n-gram hash vectorizer"""
 from __future__ import annotations
 import hashlib, re
 import numpy as np

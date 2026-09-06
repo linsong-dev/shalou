@@ -1,8 +1,15 @@
-# Changelog · Mindol 曼兜
+# Changelog · Shalou · 流动的记忆
+
+## 3.9.12+ L1 沙漏流动模型 (2026-09-06, 人工受权实施)
+
+- feat: shalou.flip——翻转/360度任意角度停驻/读写平衡协议（沙漏§二/§3.3/§五落地）：0正放/90侧放/180倒放/任意角度；自然(写主导)/逆向(读主导|规则沉积)/方向(自照镜偏离)/蓄势/主动(用户)五类翻转；原子操作冻结→快照→方向标志→审计 flip_events.jsonl；冷却120分钟；状态 flip_state.json
+- feat: core.add_unit/retrieve 内核瓶颈读写打点（失败静默）；set_angle 任意角度停驻；health 健康/翻转监控
+- 约束: 仅新增运行时状态与协调逻辑，**memory_units/relations 两表结构与既有空间未动**（与 B 方案边界一致）
+- 测试: tests/shalou/test_flip.py 6 项（读/写失衡触发、冷却、停驻、心跳健康）
 
 ## 3.9.11+ 版本前缀对齐 (2026-09-03)
 
-- chore: 与迭进 3.9.11 版本前缀对齐（迭进×Mindol 联动门禁要求前缀一致），无代码变更；plugin.json / pyproject.toml / CHANGELOG 同步
+- chore: 与迭进 3.9.11 版本前缀对齐（迭进×Shalou 联动门禁要求前缀一致），无代码变更；plugin.json / pyproject.toml / CHANGELOG 同步
 
 
 ## 3.9.10+ TOKEN 治理·记忆条目注入清洗 (2026-08-28)

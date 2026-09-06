@@ -1,4 +1,4 @@
-"""mindol.tools.write_evolution - Evolution trajectory logging
+"""shalou.tools.write_evolution - Evolution trajectory logging
 
 Records the evolution process: what changed, why, and the outcome.
 Enables cross-session learning by persisting evolutionary steps.
@@ -8,11 +8,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..core import Mindol
+from ..core import Shalou
 
 
-def _default_core() -> Mindol:
-    return Mindol()
+def _default_core() -> Shalou:
+    return Shalou()
 
 
 def write_evolution(
