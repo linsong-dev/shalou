@@ -9,3 +9,4 @@ __pycache__/
 # Runtime skill copy (installed layout, not source layout)
 skills/shalou/
 
+*.egg-info/
