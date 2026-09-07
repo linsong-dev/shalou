@@ -18,6 +18,9 @@ class Shalou:
     SPACE_CODEX = "codex"
     SPACE_STATE = "state"
     SPACE_CASE_PROTOTYPE = "case_prototype"
+    SPACE_GOAL = "goal"
+    SPACE_ANOMALY_VAULT = "anomaly_vault"
+    SPACE_VERIFICATION = "verification"
     STRENGTH_MAX = 1.0
     BOOST_REFRESH = 0.05
     # v3.7.2 记忆代谢：仅经验类空间衰减（对话/模式/抽象），权威空间豁免
@@ -39,7 +42,8 @@ class Shalou:
         self._spaces: Dict[str, MemorySpace] = {}
         for name in [self.SPACE_RAW_FILE, self.SPACE_RAW_CHAT, self.SPACE_RULE,
                      self.SPACE_PATTERN, self.SPACE_ABSTRACT, self.SPACE_TRADE, self.SPACE_CODEX,
-                     self.SPACE_STATE, self.SPACE_CASE_PROTOTYPE]:
+                     self.SPACE_STATE, self.SPACE_CASE_PROTOTYPE, self.SPACE_GOAL,
+                     self.SPACE_ANOMALY_VAULT, self.SPACE_VERIFICATION]:
             self._spaces[name] = MemorySpace(name=name)
         self._relations: List[SemanticRelation] = []
         self._relation_index: Dict[str, List[int]] = {}
@@ -114,7 +118,9 @@ class Shalou:
         return {"rule": self.SPACE_RULE, "pattern": self.SPACE_PATTERN, "trade": self.SPACE_TRADE,
                 "chat": self.SPACE_RAW_CHAT, "abstract": self.SPACE_ABSTRACT, "codex": self.SPACE_CODEX,
                 "state": self.SPACE_STATE, "case_prototype": self.SPACE_CASE_PROTOTYPE,
-                "shalou_case": self.SPACE_CASE_PROTOTYPE
+                "shalou_case": self.SPACE_CASE_PROTOTYPE, "goal": self.SPACE_GOAL,
+                "verification": self.SPACE_VERIFICATION,
+                "anomaly": self.SPACE_ANOMALY_VAULT, "anomaly_vault": self.SPACE_ANOMALY_VAULT
                 }.get(source, self.SPACE_RAW_FILE)
 
     def _rebuild_index(self, space: str):

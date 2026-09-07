@@ -126,9 +126,21 @@ class CodexMemoryAdapter:
         core.save()
         return u.uid
 
-    def archive(self, key: str, content: str, source: str = "dgen_archive") -> bool:
+    def archive(self, key: str, content: str, source: str = "dgen_archive", space: str = "") -> bool:
         try:
-            self.save_context(text=f"[{key}] {content}", source=source, space="codex", tags=["archive", key])
+            core = self._ensure_core()
+            if not space:
+                # 2026-09-07 终稿空间路由：goal/anomaly_vault/verification 按 key 前缀归位，其余默认 codex
+                _k = (key or "").lower()
+                if _k.startswith("goal"):
+                    space = core.SPACE_GOAL
+                elif _k.startswith("anomaly") or "探险" in key or "突变实验" in key:
+                    space = core.SPACE_ANOMALY_VAULT
+                elif _k.startswith("verif"):
+                    space = core.SPACE_VERIFICATION
+                else:
+                    space = core.SPACE_CODEX
+            self.save_context(text=f"[{key}] {content}", source=source, space=space, tags=["archive", key])
             return True
         except Exception:
             return False
